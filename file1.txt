@@ -1,3 +1,6 @@
+New changes added for testing GIT functionality 
+
+
 Create 2 VCNs, Internet Gateway, route table for Internet Access and Firewall rule to open port 22
 
 1. Login to OCI as the privileged user and select a Region of your choice
@@ -126,5 +129,7 @@ ssh -i /home/opc/.ssh/id_rsa opc@Private ip
 
 
 
-Setup your Domain to be managed by OCI DNS. To do this you will need to have a DNS Domain registered with any of the Public DNS providers. This lab assume that you have a Public Domain Name registered and you can use it. Provision a compute instance with Linux and setup HTTPD. Setup the OCI DNS with your Domain and configure your compute instance Public IP to be resolved when the Domain is entered in the browser.
+Setup your Domain to be managed by OCI DNS. To do this you will need to have a DNS Domain registered with any of the Public DNS providers. This lab assume that you have a Public Domain Name registered and you can use it.
+ Provision a compute instance with Linux and setup HTTPD.
+ Setup the OCI DNS with your Domain and configure your compute instance Public IP to be resolved when the Domain is entered in the browser.
 
