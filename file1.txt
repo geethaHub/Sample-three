@@ -1,0 +1,130 @@
+Create 2 VCNs, Internet Gateway, route table for Internet Access and Firewall rule to open port 22
+
+1. Login to OCI as the privileged user and select a Region of your choice
+2. Go to Networking -> Virtual Cloud Networks. Ensure you are in the correct compartment (check the left panel to check the compartment).
+3. Click on Create Virtual Network to create the VPN and enter the following
+Name – OBVCN1
+Compartment – Default or change
+CIDR Block - 192.168.0.0/16
+4. Click on Create Virtual Network. The VCN will be created and you are taken to OBVCN1 Home page. Click on the Virtual Cloud Networks in the Breadcrumb on the top left of the page. Similarly create second VCN Click on Create Virtual Network.
+Name – OBVCN2
+Compartment – Default
+CIDR Block - 192.169.0.0/16
+5. Click Create Virtual Cloud Network. The VCN will be created and you are taken to OBVCN2 Home page. Currently you don’t have any Subnets in the VCNs, but the three default VCN Components are available, DHCP Options, Security List and Route Table in both VCNs you created.
+6. In order to connect over internet using ssh to the Compute instances in these VCNs, you need to create an Internet Gateway and add it to the Route Table. You will also create Subnets in the VCNs.
+7. Click on OBVCN1 to open its Home page and click on Internet Gateways on the Resources Panel on the left side.
+8. Click on Create Internet Gateway and enter following Information
+Name – OBVCN1_IG
+Ensure the Compartment is correctly chosen
+9. Click on Create Internet Gateway
+10. Click on the Route Tables link under the Resources panel on the left side.
+11. In the Route Tables page, click on Create Route Table and enter the following details in the pop-up
+Name – OBVCN1_new_rt
+Click on +Additional Route Rule button within Route Rules section to create an empty route rule entry and enter the following
+Target Type – Internet Gateway
+Destination CIDR Block – 0.0.0.0/0
+Compartment – Use the Compartment where Created the Internet Gateway
+Target Internet Gateway – The Internet Gateway you created for the VCN
+12. Click on Create Route Table at the bottom of the screen. The route table will be created
+13. To create a Regional subnet in OBVCN1. Click on Subnets on the left panel
+14. Click on Create Subnet
+15. In the Popup enter the following
+Name – OBVCN1_regional_sn
+Subnet Type –Regional
+CIDR Block – 192.168.1.0/24
+Route Table –Route table you create for this VCN
+Subnet Access - Public
+DNS Resolution – Enable the Checkbox
+Choose the Default DHCP Options and Default Security List
+16. Click Create Subnet.
+17. Similarly create an Internet Gateway, Route Table and Regional Subnet in OBVCN2
+18. Go to OBVCN2 and create an Internet Gateway for that VCN.
+19. Visit Route Tables page for OBVCN2 and create a new Route Table as given below
+Name – OBVCN2_new_rt
+Choose the appropriate Compartment
+20. Click on +Additional Route Rule button under Route Rules
+21. In the Route Rules section enter as given below
+Target Type – Internet Gateway
+Destination CIDR – 0.0.0.0/0
+Target Internet Gateway – OBVCN2_IG
+22. Click create Route Table
+23. Click on Subnets in the Left Panel under Resources then click on Create Subnet.
+Name – OBVCN2_regional_sn
+Subnet Type – Regional
+CIDR Block – 192.169.1.0/24
+In the Route table, choose the Route table you created for OBVCN2
+Subnet Access – Public Subnet
+Under DNS Resolution – Enable the Checkbox
+Choose default DHCP Options and Security List
+24. Click Create to create the Subnet
+
+ Create a Compute instance each in the 2 VCNs
+
+1. Create an Instance in the Same Region, in any AD with Subnet of OBVCN1.
+2. Choose the Default Linux Image
+3. Choose an Availability Domain of your Choice, Type and Shape of your choice.
+4. In the Configure Networking Section:
+Virtual Cloud Network - OBVCN1
+Notice that in the Subnet the OBVCN1_regional_sn is automatically chosen
+Choose - Assign a Public IP address
+5. Accept the default Boot Volume options and paste the ssh key
+6. Click on Create. The Instance will be provisioned.
+7. Similarly create another instance in any AD, but with Regional Subnet of OBVCN2
+8. Once both the Instances are created and running in a Public regional subnet, they will have public IP and private IP addresses associated.
+9. Logged in with ssh into one of the instances using the Public IP from your laptop VM(Say peer-inst1) try to ssh to the private IP of the other node (peer-inst2)-- ssh ops public ip of 1st , ssh private ip of 2nd
+Ops
+10. You will notice that the session hangs as there is no Route to reach the other network as of now.
+11. Exit the ssh command with CTRL+C
+12. Now from the ssh connection peer-inst1 public ip , try ssh to the Public IP of peer-inst2. What happened?
+
+13. Exit from the ssh session.
+14. Navigate to /home/oracle/.ssh directory
+15. Identify the Pubic IP of the Compute instance to which you want to upload the private key and ppload the Private Key with
+scp -i id_rsa id_rsa opc@publicip:/home/opc/.ssh
+16. This will upload your private key to the compute instance
+17. Now that you have the private key uploaded, you can use it to establish ssh connection to the other compute in the other VCN. The following command can be used ssh -i /home/opc/.ssh/id_rsa opc@129.213.124.178
+18. You can try the same from the peer-inst2 and connect to the Public IP and Private IP of peer-inst1 and the behavior would be the same.
+
+Establish Peering between the 2 VCNs
+
+1. Go to OBVCN1 home page. On the Resources panel on the Left, click on Local Peering Gateways - > Create Local Peering Gateway
+2. In the Pop up provide the following information
+Name – OBVCN1_LPG
+Compartment – default compartment
+3. Click on Create Local Peering Gateway
+4. Similarly, in OBVCN2 create a Local Peering Gateway with name OBVCN2_LPG
+5. From OBVCN2 LPG listing, use the 3 Dot menu for the OBVCN2_LPG you just created and click on Establish Peering Connection. In the popup provide the details as
+Browse Below Option (Default)
+Compartment where OBVCN1 is present
+OBVCN1 as the Virtual Cloud Network
+Compartment where OBVCN1_LPG is present
+Local Peering Gateway OBVCN1_LPG
+6. Click on Establish Peering Connection
+If you were doing across Tenants then you would have to use the Enter the LPG OCID option
+7. The Status of OBVCN2_lpg should be peered
+8. Go to OBVCN1, go to Local Peering Gateways and check the status of the OBVCN1_lpg also. Its status should also be peered. Notice that it has automatically identified the CIDR of the VCN each LPG is peered with. You have successfully setup peering between the 2 VCNs in the same region.
+
+Setup route tables and check private connectivity between the instances
+
+1. Still on OBVCN1 page, click on Route Tables in the Resources panel on the Left
+2. Click on the link to the OBVCN1_new_rt Route Table you created. As of now there is 1 route rule in it. Click on Add Route Rule and select following
+Target Type – Local Peering Gateway
+Destination CIDR – 192.169.0.0/16
+Choose your Compartment of the LPG you created
+Target Local Peering Gateway – OBVCN1_LPG
+3. Click on Add Route Rules.
+4. Similarly, now you will add the Route rule in OBVCN2 with following details
+Target Type – Local Peering Gateway
+Destination CIDR – 192.168.0.0/16
+Choose the Compartment in which you created the LPG
+Target Local Peering Gateway – OBVCN2_LPG
+5. Click Add Route Rules to return back to the Route Table page.
+6. Connect to peer-inst2 with ssh over Public IP where you copied id_rsa private key.
+7. Try ssh to the private IP address of peer-inst1 (give the path to the private key you uploaded with the - i option).
+
+ssh -i /home/opc/.ssh/id_rsa opc@Private ip
+
+
+
+Setup your Domain to be managed by OCI DNS. To do this you will need to have a DNS Domain registered with any of the Public DNS providers. This lab assume that you have a Public Domain Name registered and you can use it. Provision a compute instance with Linux and setup HTTPD. Setup the OCI DNS with your Domain and configure your compute instance Public IP to be resolved when the Domain is entered in the browser.
+
